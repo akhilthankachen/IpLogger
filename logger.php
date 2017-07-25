@@ -8,6 +8,12 @@
    $dbname = $ini['db_name'];
    $verbose = $ini['verbose'];
 
+   function ip_details($ip) {
+       $json = file_get_contents("http://ipinfo.io/{$ip}/json");
+       $details = json_decode($json);
+       return $details;
+   }
+
    function createDb($dbname,$conn){
      $sql = 'CREATE Database '.$dbname;
      $retval = mysql_query( $sql, $conn );
@@ -18,8 +24,14 @@
      $sql = 'CREATE TABLE log_table( '.
            'id INT NOT NULL AUTO_INCREMENT, '.
            'ip VARCHAR(45) NOT NULL, '.
-           'hostname   TEXT NOT NULL, '.
-           'current_url  TEXT NOT NULL, '.
+           'hostname   TEXT , '.
+           'org   TEXT , '.
+           'loc   TEXT , '.
+           'city   TEXT , '.
+           'region   TEXT , '.
+           'country   TEXT , '.
+           'xff_headers   TEXT , '.
+           'current_url  TEXT , '.
            'reffered_url   TEXT , '.
            'date_time    timestamp(6) NOT NULL, '.
            'primary key ( id ))';
@@ -33,9 +45,13 @@
      $request_url = $_SERVER['REQUEST_URI'];
      $refered_url = $_SERVER['HTTP_REFERER'];
      $hostname = gethostbyaddr($_SERVER['REMOTE_ADDR']);
+     $details = ip_details($_SERVER['REMOTE_ADDR']);
+     $xff = $_SERVER['HTTP_X_FORWARDED_FOR'];
+     $xffjson = json_encode($xff);
+
      $sql = "INSERT INTO log_table ".
-        "(ip, hostname, current_url, reffered_url) ".
-        "VALUES ( '$ip_addr', '$hostname','$request_url','$refered_url')";
+        "(ip, hostname, org, loc, city, region, country, xff_headers, current_url, reffered_url) ".
+        "VALUES ( '$ip_addr', '$hostname','$details->org','$details->loc','$details->city','$details->region','$details->country','$xffjson','$request_url','$refered_url')";
 
         $retval = mysql_query( $sql, $conn );
         return $retval;
