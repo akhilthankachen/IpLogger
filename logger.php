@@ -10,8 +10,7 @@
 
    function ip_details($ip) {
        $json = file_get_contents("http://ipinfo.io/{$ip}/json");
-       $details = json_decode($json);
-       return $details;
+       return $json;
    }
 
    function createDb($dbname,$conn){
@@ -26,10 +25,10 @@
            'ip VARCHAR(45) NOT NULL, '.
            'hostname   TEXT , '.
            'org   TEXT , '.
-           'loc   TEXT , '.
            'city   TEXT , '.
            'region   TEXT , '.
            'country   TEXT , '.
+           'api_json   TEXT , '.
            'xff_headers   TEXT , '.
            'current_url  TEXT , '.
            'reffered_url   TEXT , '.
@@ -45,13 +44,14 @@
      $request_url = $_SERVER['REQUEST_URI'];
      $refered_url = $_SERVER['HTTP_REFERER'];
      $hostname = gethostbyaddr($_SERVER['REMOTE_ADDR']);
-     $details = ip_details($_SERVER['REMOTE_ADDR']);
+     $details_json = ip_details($_SERVER['REMOTE_ADDR']);
+     $details = json_decode($details_json);
      $xff = $_SERVER['HTTP_X_FORWARDED_FOR'];
      $xffjson = json_encode($xff);
 
      $sql = "INSERT INTO log_table ".
-        "(ip, hostname, org, loc, city, region, country, xff_headers, current_url, reffered_url) ".
-        "VALUES ( '$ip_addr', '$hostname','$details->org','$details->loc','$details->city','$details->region','$details->country','$xffjson','$request_url','$refered_url')";
+        "(ip, hostname, org, city, region, country, api_json, xff_headers, current_url, reffered_url) ".
+        "VALUES ( '$ip_addr', '$hostname','$details->org','$details->city','$details->region','$details->country','$details_json','$xffjson','$request_url','$refered_url')";
 
         $retval = mysql_query( $sql, $conn );
         return $retval;
